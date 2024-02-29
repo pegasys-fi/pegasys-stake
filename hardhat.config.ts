@@ -16,16 +16,9 @@ dotenv.config();
 export const BUIDLEREVM_CHAIN_ID = 31337;
 
 const DEFAULT_BLOCK_GAS_LIMIT = 12500000;
-const DEFAULT_GAS_PRICE = 100000000;
-const HARDFORK = 'istanbul';
-const INFURA_KEY = process.env.INFURA_KEY || '';
 const ETHERSCAN_KEY = process.env.ETHERSCAN_KEY || '';
-const MNEMONIC_PATH = "m/44'/60'/0'/0";
-const MNEMONIC = process.env.MNEMONIC || '';
 const PRIVATE_KEY = process.env.PRIVATE_KEY || '';
 const SKIP_LOAD = process.env.SKIP_LOAD === 'true';
-const MAINNET_FORK = process.env.MAINNET_FORK === 'true';
-const FORKING_BLOCK = parseInt(process.env.FORKING_BLOCK || '12369243');
 
 // Prevent to load scripts before compilation and typechain
 if (!SKIP_LOAD) {
@@ -40,34 +33,6 @@ if (!SKIP_LOAD) {
 }
 
 require(`${path.join(__dirname, 'tasks/misc')}/set-dre.ts`);
-
-const mainnetFork = MAINNET_FORK
-  ? {
-      blockNumber: FORKING_BLOCK,
-      url: `https://rpc-tanenbaum.rollux.com`
-    }
-  : undefined;
-
-// Use of mnemonic over private key if mnemonic is provided
-const accountsToUse =
-  PRIVATE_KEY == ''
-    ? {
-        mnemonic: MNEMONIC,
-        path: MNEMONIC_PATH,
-        initialIndex: 0,
-        count: 20,
-      }
-    : [PRIVATE_KEY];
-
-const getCommonNetworkConfig = (networkName: eEthereumNetwork, networkId: number) => {
-  return {
-    url: `https://rpc-tanenbaum.rollux.com`, 
-    hardfork: HARDFORK,
-    blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
-    chainId: 57000,
-    accounts: accountsToUse,
-  };
-};
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -93,8 +58,18 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      main: ETHERSCAN_KEY,
+      main: "abc" // Set to an empty string or some placeholder
     },
+    customChains: [
+      {
+        network: "main",
+        chainId: 570,
+        urls: {
+          apiURL: "https://explorer.rollux.com/api",
+          browserURL: "https://explorer.rollux.com/"
+        }
+      }
+    ]
   },
   defaultNetwork: 'hardhat',
   mocha: {
@@ -102,10 +77,11 @@ const config: HardhatUserConfig = {
   },
   networks: {
     main: {
-      ...getCommonNetworkConfig(eEthereumNetwork.main, 57000),
-      gasPrice: DEFAULT_GAS_PRICE,
-      url: `https://rpc-tanenbaum.rollux.com`
+      chainId: 570,
+      url: "https://rpc.rollux.com",
+      accounts: [PRIVATE_KEY]
     }, 
+    // Hardhat config for testing purposes
     hardhat: {
       hardfork: 'london',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
@@ -117,19 +93,6 @@ const config: HardhatUserConfig = {
         privateKey: secretKey,
         balance,
       })),
-      forking: mainnetFork,
-    },
-    ganache: {
-      url: 'http://ganache:8545',
-      accounts: {
-        mnemonic: 'fox sight canyon orphan hotel grow hedgehog build bless august weather swarm',
-        path: "m/44'/60'/0'/0",
-        initialIndex: 0,
-        count: 20,
-      },
-    },
-    coverage: {
-      url: 'http://localhost:8555',
     },
   },
 };
