@@ -9,7 +9,7 @@ import { HardhatUserConfig } from 'hardhat/types';
 import '@typechain/hardhat';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-waffle';
-import "@nomicfoundation/hardhat-verify";
+import '@nomicfoundation/hardhat-verify';
 
 dotenv.config();
 
@@ -96,7 +96,7 @@ const config: HardhatUserConfig = {
       main: ETHERSCAN_KEY,
     },
   },
-  defaultNetwork: 'main',
+  defaultNetwork: 'hardhat',
   mocha: {
     timeout: 0,
   },
@@ -107,7 +107,7 @@ const config: HardhatUserConfig = {
       url: `https://rpc-tanenbaum.rollux.com`
     }, 
     hardhat: {
-      hardfork: 'istanbul',
+      hardfork: 'london',
       blockGasLimit: DEFAULT_BLOCK_GAS_LIMIT,
       gas: DEFAULT_BLOCK_GAS_LIMIT,
       chainId: BUIDLEREVM_CHAIN_ID,
@@ -118,6 +118,15 @@ const config: HardhatUserConfig = {
         balance,
       })),
       forking: mainnetFork,
+    },
+    ganache: {
+      url: 'http://ganache:8545',
+      accounts: {
+        mnemonic: 'fox sight canyon orphan hotel grow hedgehog build bless august weather swarm',
+        path: "m/44'/60'/0'/0",
+        initialIndex: 0,
+        count: 20,
+      },
     },
     coverage: {
       url: 'http://localhost:8555',
