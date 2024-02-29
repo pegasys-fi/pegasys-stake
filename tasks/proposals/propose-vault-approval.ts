@@ -3,7 +3,6 @@ import { IAaveGovernanceV2__factory } from '../../types';
 import { Signer } from 'ethers';
 import { getDefenderRelaySigner } from '../../helpers/defender-utils';
 import { DRE } from '../../helpers/misc-utils';
-import { logError } from '../../helpers/tenderly-utils';
 import { MAX_UINT_AMOUNT } from '../../helpers/constants';
 
 task('propose-vault-approval', 'Create some proposals and votes')
@@ -67,7 +66,6 @@ task('propose-vault-approval', 'Create some proposals and votes')
         await tx.wait();
         console.log('- Proposal submitted to Governance');
       } catch (error) {
-        logError();
         throw error;
       }
     }

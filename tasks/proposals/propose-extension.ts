@@ -8,7 +8,6 @@ import {
 import { Signer } from 'ethers';
 import { getDefenderRelaySigner } from '../../helpers/defender-utils';
 import { DRE } from '../../helpers/misc-utils';
-import { logError } from '../../helpers/tenderly-utils';
 
 task('propose-extension', 'Create some proposals and votes')
   .addParam('stkAaveProxy')
@@ -29,7 +28,7 @@ task('propose-extension', 'Create some proposals and votes')
         stkAaveImpl,
         stkBptProxy,
         stkBptImpl,
-        ipfsHash
+        ipfsHash,
       },
       localBRE: any
     ) => {
@@ -99,7 +98,6 @@ task('propose-extension', 'Create some proposals and votes')
         console.log('- Proposal submitted to Governance');
         await tx.wait();
       } catch (error) {
-        logError();
         throw error;
       }
 

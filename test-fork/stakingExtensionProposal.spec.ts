@@ -4,9 +4,9 @@ import { BigNumber } from 'ethers';
 import { formatEther, parseEther } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { JsonRpcSigner } from '@ethersproject/providers';
-import { DRE, increaseTimeAndMineTenderly, timeLatest, waitForTx } from '../helpers/misc-utils';
+import { DRE,timeLatest, waitForTx } from '../helpers/misc-utils';
+
 import {
-  increaseTimeTenderly,
   latestBlock,
   advanceBlockTo,
   impersonateAccountsHardhat,
@@ -27,7 +27,6 @@ import {
   StakedTokenBptRev2__factory,
 } from '../types';
 import { spendList } from './helpers';
-import { logError } from '../helpers/tenderly-utils';
 
 const {
   RESERVES = 'DAI,GUSD,USDC,USDT,WBTC,WETH',
@@ -201,14 +200,12 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     try {
       await (await gov.queue(proposalId, { gasLimit: 3000000 })).wait();
     } catch (error) {
-      logError();
       throw error;
     }
 
     const proposalState = await gov.getProposalState(proposalId);
     expect(proposalState).to.be.equal(5);
 
-    await increaseTimeTenderly(604800 + 10);
   });
 
   it('Proposal should be executed', async () => {
@@ -216,7 +213,6 @@ describe('Proposal: Extend Staked Aave distribution', () => {
     try {
       await (await gov.execute(proposalId, { gasLimit: 3000000 })).wait();
     } catch (error) {
-      logError();
       throw error;
     }
 
@@ -237,19 +233,16 @@ describe('Proposal: Extend Staked Aave distribution', () => {
 
   it('Users should be able to redeem stkAave', async () => {
     const amount = parseEther('1');
-    await increaseTimeAndMineTenderly(48600);
 
     try {
       await waitForTx(await aaveStakeV2.cooldown({ gasLimit: 3000000 }));
 
       const COOLDOWN_SECONDS = await aaveStakeV2.COOLDOWN_SECONDS();
-      await increaseTimeAndMineTenderly(Number(COOLDOWN_SECONDS.toString()));
 
       await expect(
         aaveStakeV2.connect(proposer).redeem(proposer.address, amount, { gasLimit: 3000000 })
       ).to.emit(aaveStakeV2, 'Redeem');
     } catch (error) {
-      logError();
       throw error;
     }
   });
@@ -265,19 +258,16 @@ describe('Proposal: Extend Staked Aave distribution', () => {
 
   it('Users should be able to redeem AAVE via redeem stkBpt', async () => {
     const amount = parseEther('1');
-    await increaseTimeAndMineTenderly(48600);
 
     try {
       await waitForTx(await bptStakeV2.cooldown({ gasLimit: 3000000 }));
 
       const COOLDOWN_SECONDS = await bptStakeV2.COOLDOWN_SECONDS();
-      await increaseTimeAndMineTenderly(Number(COOLDOWN_SECONDS.toString()));
 
       await expect(
         bptStakeV2.connect(proposer).redeem(proposer.address, amount, { gasLimit: 3000000 })
       ).to.emit(bptStakeV2, 'Redeem');
     } catch (error) {
-      logError();
       throw error;
     }
   });

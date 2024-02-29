@@ -62,15 +62,6 @@ export const timeLatest = async () => {
 export const increaseTime = async (secondsToIncrease: number) =>
   await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
 
-export const increaseTimeTenderly = async (secondsToIncrease: number) => {
-  if (DRE.network.name.includes('tenderly')) {
-    await DRE.ethers.provider.send('evm_increaseTime', [`0x${secondsToIncrease.toString(16)}`]);
-    return;
-  }
-  await DRE.ethers.provider.send('evm_increaseTime', [secondsToIncrease]);
-  await DRE.ethers.provider.send('evm_mine', []);
-};
-
 export const advanceBlock = async (timestamp?: number) => {
   const priorBlock = await getCurrentBlock();
   await DRE.ethers.provider.send('evm_mine', timestamp ? [timestamp] : []);
@@ -79,10 +70,6 @@ export const advanceBlock = async (timestamp?: number) => {
     await advanceBlock();
     return;
   }
-};
-
-export const increaseTimeAndMineTenderly = async (secondsToIncrease: number) => {
-  await increaseTimeTenderly(secondsToIncrease);
 };
 
 export const increaseTimeAndMine = async (secondsToIncrease: number) => {
@@ -107,15 +94,6 @@ export const latestBlock = async () => DRE.ethers.provider.getBlockNumber();
 
 export const advanceBlockTo = async (target: number) => {
   const currentBlock = await latestBlock();
-  if (DRE.network.name.includes('tenderly')) {
-    const pendingBlocks = target - currentBlock - 1;
-
-    const response = await DRE.ethers.provider.send('evm_increaseBlocks', [
-      `0x${pendingBlocks.toString(16)}`,
-    ]);
-
-    return;
-  }
   const start = Date.now();
   let notified;
   if (target < currentBlock)

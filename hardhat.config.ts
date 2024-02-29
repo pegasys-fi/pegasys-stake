@@ -9,8 +9,7 @@ import { HardhatUserConfig } from 'hardhat/types';
 import '@typechain/hardhat';
 import 'solidity-coverage';
 import '@nomiclabs/hardhat-waffle';
-import '@nomiclabs/hardhat-etherscan';
-import '@tenderly/hardhat-tenderly';
+import "@nomicfoundation/hardhat-verify";
 
 dotenv.config();
 
@@ -93,7 +92,9 @@ const config: HardhatUserConfig = {
     outDir: 'types',
   },
   etherscan: {
-    apiKey: ETHERSCAN_KEY,
+    apiKey: {
+      main: ETHERSCAN_KEY,
+    },
   },
   defaultNetwork: 'main',
   mocha: {
