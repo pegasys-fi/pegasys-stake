@@ -7,6 +7,7 @@ import {
   STAKED_PSYS_SYMBOL,
   STAKED_PSYS_DECIMALS,
   MAX_UINT_AMOUNT,
+  PSYS_GOVERNANCE_V2,
 } from '../../helpers/constants';
 import {
   deployInitializableAdminUpgradeabilityProxy,
@@ -74,8 +75,9 @@ export const testDeploypsysStakeV1 = async (
   );
   await insertContractAddressInDb(eContractid.StakedPSYS, StakedPSYSProxy.address);
 
-  const peiEncodedInitialize =
-    pegasysIncentivesControllerImplementation.interface.encodeFunctionData('initialize');
+  const peiEncodedInitialize = pegasysIncentivesControllerImplementation.interface.encodeFunctionData(
+    'initialize'
+  );
   await pegasysIncentivesControllerProxy['initialize(address,address,bytes)'](
     pegasysIncentivesControllerImplementation.address,
     proxyAdmin,
@@ -123,6 +125,7 @@ export const testDeploypsysStakeV2 = async (
     vaultOfRewardsAddress,
     emissionManager,
     (1000 * 60 * 60).toString(),
+    PSYS_GOVERNANCE_V2,
   ]);
 
   const StakedPSYSEncodedInitialize = StakedPSYSImpl.interface.encodeFunctionData('initialize');

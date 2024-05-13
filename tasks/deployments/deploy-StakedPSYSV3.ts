@@ -17,7 +17,7 @@ import {
 } from '../../helpers/contracts-accessors';
 import { checkVerification } from '../../helpers/etherscan-verification';
 import { constants } from 'buffer';
-const {StakedPSYSV3} = eContractid;
+const { StakedPSYSV3 } = eContractid;
 
 task(`deploy-${StakedPSYSV3}`, `Deploys the ${StakedPSYSV3} contract`)
   .addFlag('verify', 'Verify StakedPSYS contract via Etherscan API.')
@@ -53,14 +53,14 @@ task(`deploy-${StakedPSYSV3}`, `Deploys the ${StakedPSYSV3} contract`)
         vaultAddress || getPegasysIncentivesVaultPerNetwork(network),
         getPegasysAdminPerNetwork(network),
         getDistributionDurationPerNetwork(network),
-        PSYS_GOVERNANCE_V2
+        PSYS_GOVERNANCE_V2,
       ],
-      true // disable verify due not supported by current buidler etherscan plugin
+      false // disable verify due not supported by current buidler etherscan plugin
     );
     await StakedPSYSImpl.deployTransaction.wait();
     await registerContractInJsonDb(await StakedPSYSImpl.name(), StakedPSYSImpl);
     console.log(`\tDeploying ${StakedPSYSV3} Transparent Proxy ...`);
-    
+
     const StakedPSYSProxy = await deployInitializableAdminUpgradeabilityProxy(verify);
     await registerContractInJsonDb(StakedPSYSV3, StakedPSYSProxy);
 
