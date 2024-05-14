@@ -71,7 +71,7 @@ const config: HardhatUserConfig = {
       }
     ]
   },
-  defaultNetwork: 'main',
+  defaultNetwork: 'hardhat',
   mocha: {
     timeout: 0,
   },
@@ -80,7 +80,7 @@ const config: HardhatUserConfig = {
       chainId: 570,
       url: "https://rpc.rollux.com",
       accounts: [PRIVATE_KEY]
-    }, 
+    },
     // Hardhat config for testing purposes
     hardhat: {
       hardfork: 'london',
