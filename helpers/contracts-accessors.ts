@@ -8,8 +8,6 @@ import { IConfigurableRightsPool } from '../types/IConfigurableRightsPool';
 import { IControllerPegasysEcosystemReserve } from '../types/IControllerPegasysEcosystemReserve';
 import { SelfdestructTransfer } from '../types/SelfdestructTransfer';
 import { IbPool } from '../types/IbPool'; // Balance pool
-// import { StakedTokenV3 } from '../types/StakedTokenV3';
-// import { StakedTokenV3 } from '../types/StakedTokenV3';
 import { PegasysStakingHelper } from '../types/PegasysStakingHelper';
 import { StakeUiHelper } from '../types/StakeUiHelper';
 import { Ierc20Detailed } from '../types/Ierc20Detailed';
@@ -102,56 +100,6 @@ export const deployStakedPSYSV3 = async (
   }
   return instance;
 };
-
-// export const deployStakedTokenV3 = async (
-//   [
-//     stakedToken,
-//     rewardsToken,
-//     cooldownSeconds,
-//     unstakeWindow,
-//     rewardsVault,
-//     emissionManager,
-//     distributionDuration,
-//     name,
-//     symbol,
-//     decimals,
-//     governance,
-//   ]: [
-//     tEthereumAddress,
-//     tEthereumAddress,
-//     string,
-//     string,
-//     tEthereumAddress,
-//     tEthereumAddress,
-//     string,
-//     string,
-//     string,
-//     string,
-//     tEthereumAddress
-//   ],
-//   verify?: boolean,
-//   signer?: Signer
-// ) => {
-//   const id = eContractid.StakedTokenV3;
-//   const args: string[] = [
-//     stakedToken,
-//     rewardsToken,
-//     cooldownSeconds,
-//     unstakeWindow,
-//     rewardsVault,
-//     emissionManager,
-//     distributionDuration,
-//     name,
-//     symbol,
-//     decimals,
-//     governance,
-//   ];
-//   const instance = await deployContract<StakedTokenV3>(id, args, '', signer);
-//   if (verify) {
-//     await verifyContract(instance.address, args);
-//   }
-//   return instance;
-// };
 
 export const deployStakedTokenV3Revision3 = async (
   [

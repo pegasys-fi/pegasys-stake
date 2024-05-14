@@ -30,7 +30,7 @@ contract StakedPSYSV3 is
   using SafeMath for uint256;
   using SafeERC20 for IERC20;
 
-  /// @dev Start of Storage layout from StakedToken v1
+  /// @dev Start of Storage layout from StakedPSYS v1
   uint256 public constant REVISION = 2;
 
   string internal constant NAME = 'Staked PSYS';
@@ -122,12 +122,8 @@ contract StakedPSYSV3 is
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     uint256 balanceOfUser = balanceOf(onBehalfOf);
 
-    uint256 accruedRewards = _updateUserAssetInternal(
-      onBehalfOf,
-      address(this),
-      balanceOfUser,
-      totalSupply()
-    );
+    uint256 accruedRewards =
+      _updateUserAssetInternal(onBehalfOf, address(this), balanceOfUser, totalSupply());
     if (accruedRewards != 0) {
       emit RewardsAccrued(onBehalfOf, accruedRewards);
       stakerRewardsToClaim[onBehalfOf] = stakerRewardsToClaim[onBehalfOf].add(accruedRewards);
@@ -193,11 +189,8 @@ contract StakedPSYSV3 is
    * @param amount Amount to stake
    **/
   function claimRewards(address to, uint256 amount) external override {
-    uint256 newTotalRewards = _updateCurrentUnclaimedRewards(
-      msg.sender,
-      balanceOf(msg.sender),
-      false
-    );
+    uint256 newTotalRewards =
+      _updateCurrentUnclaimedRewards(msg.sender, balanceOf(msg.sender), false);
     uint256 amountToClaim = (amount == type(uint256).max) ? newTotalRewards : amount;
 
     stakerRewardsToClaim[msg.sender] = newTotalRewards.sub(amountToClaim, 'INVALID_AMOUNT');
@@ -213,7 +206,11 @@ contract StakedPSYSV3 is
    * @param to Address to transfer to
    * @param amount Amount to transfer
    **/
-  function _transfer(address from, address to, uint256 amount) internal override {
+  function _transfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal override {
     uint256 balanceOfFrom = balanceOf(from);
     // Sender
     _updateCurrentUnclaimedRewards(from, balanceOfFrom, true);
@@ -251,12 +248,8 @@ contract StakedPSYSV3 is
     uint256 userBalance,
     bool updateStorage
   ) internal returns (uint256) {
-    uint256 accruedRewards = _updateUserAssetInternal(
-      user,
-      address(this),
-      userBalance,
-      totalSupply()
-    );
+    uint256 accruedRewards =
+      _updateUserAssetInternal(user, address(this), userBalance, totalSupply());
     uint256 unclaimedRewards = stakerRewardsToClaim[user].add(accruedRewards);
 
     if (accruedRewards != 0) {
@@ -294,23 +287,24 @@ contract StakedPSYSV3 is
       return 0;
     }
 
-    uint256 minimalValidCooldownTimestamp = block.timestamp.sub(COOLDOWN_SECONDS).sub(
-      UNSTAKE_WINDOW
-    );
+    uint256 minimalValidCooldownTimestamp =
+      block.timestamp.sub(COOLDOWN_SECONDS).sub(UNSTAKE_WINDOW);
 
     if (minimalValidCooldownTimestamp > toCooldownTimestamp) {
       toCooldownTimestamp = 0;
     } else {
-      uint256 fromCooldownTimestamp = (minimalValidCooldownTimestamp > fromCooldownTimestamp)
-        ? block.timestamp
-        : fromCooldownTimestamp;
+      uint256 fromCooldownTimestamp =
+        (minimalValidCooldownTimestamp > fromCooldownTimestamp)
+          ? block.timestamp
+          : fromCooldownTimestamp;
 
       if (fromCooldownTimestamp < toCooldownTimestamp) {
         return toCooldownTimestamp;
       } else {
         toCooldownTimestamp = (
           amountToReceive.mul(fromCooldownTimestamp).add(toBalance.mul(toCooldownTimestamp))
-        ).div(amountToReceive.add(toBalance));
+        )
+          .div(amountToReceive.add(toBalance));
       }
     }
     return toCooldownTimestamp;
@@ -322,8 +316,8 @@ contract StakedPSYSV3 is
    * @return The rewards
    */
   function getTotalRewardsBalance(address staker) external view returns (uint256) {
-    DistributionTypes.UserStakeInput[]
-      memory userStakeInputs = new DistributionTypes.UserStakeInput[](1);
+    DistributionTypes.UserStakeInput[] memory userStakeInputs =
+      new DistributionTypes.UserStakeInput[](1);
     userStakeInputs[0] = DistributionTypes.UserStakeInput({
       underlyingAsset: address(this),
       stakedByUser: balanceOf(staker),
@@ -364,13 +358,14 @@ contract StakedPSYSV3 is
     //solium-disable-next-line
     require(block.timestamp <= deadline, 'INVALID_EXPIRATION');
     uint256 currentValidNonce = _nonces[owner];
-    bytes32 digest = keccak256(
-      abi.encodePacked(
-        '\x19\x01',
-        DOMAIN_SEPARATOR,
-        keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
-      )
-    );
+    bytes32 digest =
+      keccak256(
+        abi.encodePacked(
+          '\x19\x01',
+          DOMAIN_SEPARATOR,
+          keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, currentValidNonce, deadline))
+        )
+      );
 
     require(owner == ecrecover(digest, v, r, s), 'INVALID_SIGNATURE');
     _nonces[owner] = currentValidNonce.add(1);
@@ -386,7 +381,11 @@ contract StakedPSYSV3 is
    * @param to the to address
    * @param amount the amount to transfer
    */
-  function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+  function _beforeTokenTransfer(
+    address from,
+    address to,
+    uint256 amount
+  ) internal override {
     address votingFromDelegatee = _votingDelegates[from];
     address votingToDelegatee = _votingDelegates[to];
 
@@ -428,9 +427,7 @@ contract StakedPSYSV3 is
     }
   }
 
-  function _getDelegationDataByType(
-    DelegationType delegationType
-  )
+  function _getDelegationDataByType(DelegationType delegationType)
     internal
     view
     override
@@ -470,9 +467,10 @@ contract StakedPSYSV3 is
     bytes32 r,
     bytes32 s
   ) public {
-    bytes32 structHash = keccak256(
-      abi.encode(DELEGATE_BY_TYPE_TYPEHASH, delegatee, uint256(delegationType), nonce, expiry)
-    );
+    bytes32 structHash =
+      keccak256(
+        abi.encode(DELEGATE_BY_TYPE_TYPEHASH, delegatee, uint256(delegationType), nonce, expiry)
+      );
     bytes32 digest = keccak256(abi.encodePacked('\x19\x01', DOMAIN_SEPARATOR, structHash));
     address signatory = ecrecover(digest, v, r, s);
     require(signatory != address(0), 'INVALID_SIGNATURE');
