@@ -3,16 +3,14 @@ import { eContractid, tEthereumAddress } from './types';
 import { MintableErc20 } from '../types/MintableErc20';
 import { StakedPSYS } from '../types/StakedPSYS';
 import { StakedPSYSV3 } from '../types/StakedPSYSV3';
-import { IcrpFactory } from '../types/IcrpFactory'; // Configurable right pool factory
+import { ICRPFactory } from '../types/ICRPFactory'; // Configurable right pool factory
 import { IConfigurableRightsPool } from '../types/IConfigurableRightsPool';
 import { IControllerPegasysEcosystemReserve } from '../types/IControllerPegasysEcosystemReserve';
 import { SelfdestructTransfer } from '../types/SelfdestructTransfer';
-import { IbPool } from '../types/IbPool'; // Balance pool
-import { StakedTokenV3 } from '../types/StakedTokenV3';
-import { StakedTokenV3 } from '../types/StakedTokenV3';
+import { IBPool } from '../types/IBPool'; // Balance pool
 import { PegasysStakingHelper } from '../types/PegasysStakingHelper';
-import { StakeUiHelper } from '../types/StakeUiHelper';
-import { Ierc20Detailed } from '../types/Ierc20Detailed';
+import { StakeUIHelper } from '../types/StakeUIHelper';
+import { IERC20Detailed } from '../types/IERC20Detailed';
 import { InitializableAdminUpgradeabilityProxy } from '../types/InitializableAdminUpgradeabilityProxy';
 import { PegasysIncentivesController } from '../types/PegasysIncentivesController';
 import { MockTransferHook } from '../types/MockTransferHook';
@@ -23,7 +21,12 @@ import { DoubleTransferHelper } from '../types/DoubleTransferHelper';
 import { zeroAddress } from 'ethereumjs-util';
 import { ZERO_ADDRESS } from './constants';
 import { Signer } from 'ethers';
-import { GovernancePowerWithSnapshot, StakedTokenV3Rev3 } from '../types';
+import {
+  GovernancePowerWithSnapshot,
+  StakedTokenBptRev2,
+  StakedTokenDataProvider,
+  StakedTokenV3Rev3,
+} from '../types';
 
 export const deployStakedPSYS = async (
   [
@@ -72,7 +75,7 @@ export const deployStakedPSYSV3 = async (
     rewardsVault,
     emissionManager,
     distributionDuration,
-    governance
+    governance,
   ]: [
     tEthereumAddress,
     tEthereumAddress,
@@ -102,57 +105,6 @@ export const deployStakedPSYSV3 = async (
   }
   return instance;
 };
-
-export const deployStakedTokenV3 = async (
-  [
-    stakedToken,
-    rewardsToken,
-    cooldownSeconds,
-    unstakeWindow,
-    rewardsVault,
-    emissionManager,
-    distributionDuration,
-    name,
-    symbol,
-    decimals,
-    governance,
-  ]: [
-    tEthereumAddress,
-    tEthereumAddress,
-    string,
-    string,
-    tEthereumAddress,
-    tEthereumAddress,
-    string,
-    string,
-    string,
-    string,
-    tEthereumAddress
-  ],
-  verify?: boolean,
-  signer?: Signer
-) => {
-  const id = eContractid.StakedTokenV3;
-  const args: string[] = [
-    stakedToken,
-    rewardsToken,
-    cooldownSeconds,
-    unstakeWindow,
-    rewardsVault,
-    emissionManager,
-    distributionDuration,
-    name,
-    symbol,
-    decimals,
-    governance,
-  ];
-  const instance = await deployContract<StakedTokenV3>(id, args, '', signer);
-  if (verify) {
-    await verifyContract(instance.address, args);
-  }
-  return instance;
-};
-
 
 export const deployStakedTokenV3Revision3 = async (
   [
@@ -298,7 +250,9 @@ export const deployInitializableAdminUpgradeabilityProxy = async (
     signer
   );
   await instance.deployTransaction.wait();
+  if (verify) {
     await verifyContract(instance.address, args);
+  }
   return instance;
 };
 
@@ -327,7 +281,10 @@ export const getStakedPSYSV3 = getContractFactory<StakedPSYSV3>(eContractid.Stak
 export const getStakedPSYSProxy = async (address?: tEthereumAddress) => {
   return await getContract<InitializableAdminUpgradeabilityProxy>(
     eContractid.InitializableAdminUpgradeabilityProxy,
-    address || (await getDb().get(`${eContractid.StakedPSYSV3}.${DRE.network.name}`).value()).address
+    address ||
+      (
+        await getDb().get(`${eContractid.StakedPSYSV3}.${DRE.network.name}`).value()
+      ).address
   );
 };
 
@@ -342,7 +299,7 @@ export const getStakedPSYSImpl = async (address?: tEthereumAddress) => {
 };
 
 export const getStakedTokenV3 = async (address?: tEthereumAddress) => {
-  return await getContract<StakedTokenV3>(
+  return await getContract<StakedPSYSV3>(
     eContractid.StakedTokenV3,
     address ||
       (
@@ -355,18 +312,18 @@ export const getPegasysIncentivesController = getContractFactory<PegasysIncentiv
   eContractid.PegasysIncentivesController
 );
 
-export const getIErc20Detailed = getContractFactory<Ierc20Detailed>(eContractid.IERC20Detailed);
+export const getIErc20Detailed = getContractFactory<IERC20Detailed>(eContractid.IERC20Detailed);
 
 export const getATokenMock = getContractFactory<ATokenMock>(eContractid.ATokenMock);
 
 export const getCRPFactoryContract = (address: tEthereumAddress) =>
-  getContract<IcrpFactory>(eContractid.ICRPFactory, address);
+  getContract<ICRPFactory>(eContractid.ICRPFactory, address);
 
 export const getCRPContract = (address: tEthereumAddress) =>
   getContract<IConfigurableRightsPool>(eContractid.IConfigurableRightsPool, address);
 
 export const getBpool = (address: tEthereumAddress) =>
-  getContract<IbPool>(eContractid.IBPool, address);
+  getContract<IBPool>(eContractid.IBPool, address);
 
 export const getERC20Contract = (address: tEthereumAddress) =>
   getContract<MintableErc20>(eContractid.MintableErc20, address);
@@ -412,7 +369,21 @@ export const deployStakeUIHelper = async (
   const id = eContractid.StakeUIHelper;
   const args: string[] = [priceOracle, bptPriceFeed, psys, stkPSYS, bpt, stkBpt];
 
-  const instance = await deployContract<StakeUiHelper>(id, args);
+  const instance = await deployContract<StakeUIHelper>(id, args);
+  if (verify) {
+    await verifyContract(instance.address, args);
+  }
+  return instance;
+};
+
+export const deployStakedTokenDataProvider = async (
+  [stkAave, ethPriceFeed, aavePriceFeed]: [tEthereumAddress, tEthereumAddress, tEthereumAddress],
+  verify?: boolean
+) => {
+  const id = eContractid.StakedTokenDataProvider;
+  const args: string[] = [stkAave, ethPriceFeed, aavePriceFeed];
+
+  const instance = await deployContract<StakedTokenDataProvider>(id, args);
   if (verify) {
     await verifyContract(instance.address, args);
   }

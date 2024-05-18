@@ -22,10 +22,8 @@ export enum eContractid {
   LendingPoolMock = 'LendingPoolMock',
   MockTransferHook = 'MockTransferHook',
   ATokenMock = 'ATokenMock',
-  StakedPSYSV3 = 'StakedPSYSV3',
   DoubleTransferHelper = 'DoubleTransferHelper',
   ICRPFactory = 'ICRPFactory',
-  StakedTokenV3 = 'StakedTokenV3',
   StakedTokenV3 = 'StakedTokenV3',
   IConfigurableRightsPool = 'IConfigurableRightsPool',
   IBPool = 'IBPool',
@@ -35,6 +33,7 @@ export enum eContractid {
   StakedTokenBptRev2 = 'StakedTokenBptRev2',
   PegasysStakingHelper = 'PegasysStakingHelper',
   StakeUIHelper = 'StakeUIHelper',
+  StakedTokenDataProvider = 'StakedTokenDataProvider',
 }
 
 export type tEthereumAddress = string;

@@ -6,6 +6,8 @@ interface IStakedPSYS {
 
   function redeem(address to, uint256 amount) external;
 
+  function previewRedeem(uint256 shares) external view returns (uint256);
+
   function cooldown() external;
 
   function claimRewards(address to, uint256 amount) external;

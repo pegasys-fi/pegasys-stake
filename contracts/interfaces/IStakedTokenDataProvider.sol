@@ -1,147 +1,105 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.5;
+pragma solidity ^0.7.5;
 pragma experimental ABIEncoderV2;
 
 /**
  * @title IStakedTokenDataProvider
- * @notice It defines the basic interface of the Staked Token Data Provider
+ * @notice Basic interface of the Staked Token Data Provider
  */
 interface IStakedTokenDataProvider {
   struct StakedTokenData {
-    uint256 stakedTokenTotalSupply;
-    uint256 stakedTokenTotalRedeemableAmount;
-    uint256 stakeCooldownSeconds;
-    uint256 stakeUnstakeWindow;
-    uint256 stakedTokenPriceEth;
-    uint256 rewardTokenPriceEth;
-    uint256 stakeApy;
-    uint128 distributionPerSecond;
-    uint256 distributionEnd;
+    uint256 stakedTokenTotalSupply; // total supply of staked token
+    uint256 stakedTokenTotalRedeemableAmount; // total redeemable amount of staked token
+    uint256 stakeCooldownSeconds; // cooldown period of staked token denominated in seconds
+    uint256 stakeUnstakeWindow; // unstake window of staked token denominated in seconds
+    uint256 stakedTokenPriceUsd; // price of staked token denominated in USD
+    uint256 rewardTokenPriceUsd; // price of reward token denominated in USD
+    uint256 stakeApy; // apy(annual percentage yield) of staked token
+    uint128 distributionPerSecond; // distribution of reward tokens per second
+    bool inPostSlashingPeriod; // staked token in slashing period or not
+    uint256 distributionEnd; // distribution end time
+    uint256 maxSlashablePercentage; // max slashable percentage of the total staked amount
   }
 
   struct StakedTokenUserData {
-    uint256 stakedTokenUserBalance;
-    uint256 stakedTokenRedeemableAmount;
-    uint256 underlyingTokenUserBalance;
-    uint256 rewardsToClaim;
-    uint40 userCooldownTimestamp;
-    uint216 userCooldownAmount;
+    uint256 stakedTokenUserBalance; // user balance of staked token
+    uint256 stakedTokenRedeemableAmount; // user redeemable amount of staked token
+    uint256 underlyingTokenUserBalance; // underlying token balance of user
+    uint256 rewardsToClaim; // total rewards balance of user
+    uint40 userCooldownTimestamp; // cooldown timestamp of user
+    uint216 userCooldownAmount; // amount available to unstake after cooldown timestamp for user
   }
 
   /**
-   * @notice Return the address of the ETH price feed, USD denominated
    * @return The address of the ETH price feed, USD denominated, expressed with 8 decimals
    */
-  function ETH_USD_PRICE_FEED() external returns (address);
+  function ETH_USD_PRICE_FEED() external view returns (address);
 
   /**
-   * @notice Return the address of the PSYS price feed, ETH denominated
-   * @return The address of the PSYS price feed, ETH denominated, expressed with 18 decimals
+   * @return The address of the AAVE price feed, USD denominated, expressed with 8 decimals
    */
-  function PSYS_PRICE_FEED() external returns (address);
+  function PSYS_USD_PRICE_FEED() external view returns (address);
 
   /**
-   * @notice Return the address of the BPT price feed, ETH denominated
-   * @return The address of the BPT price feed, ETH denominated, expressed with 18 decimals
+   * @return The address of the StkAAVE token
    */
-  function BPT_PRICE_FEED() external returns (address);
+  function STAKED_PSYS() external view returns (address);
 
   /**
-   * @notice Return the address of the PSYS token
-   * @return The address of the PSYS token
+   * @notice Returns data of Staked asset
+   * @param stakedAsset The address of the staked asset (eg. stkAave, stkBptAave)
+   * @param oracle The address of the oracle for the staked asset, USD denominated with 8 decimals
+   * @return stakedAssetData struct with staked asset data
    */
-  function PSYS() external returns (address);
+  function getStakedAssetData(
+    address stakedAsset,
+    address oracle
+  ) external view returns (StakedTokenData memory stakedAssetData);
 
   /**
-   * @notice Return the address of the Staked PSYS token
-   * @return The address of the StkPSYS token
+   * @notice Retrieves staked token data and user-specific data for a given user, staked asset,
+   *          and its associated oracle.
+   * @param stakedAsset The address of the staked asset (eg. stkAave, stkBptAave)
+   * @param oracle The address of the oracle for the staked asset, USD denominated with 8 decimals
+   * @param user The address of the user for whom the data is to be fetched.
+   * @return stakedTokenData `StakedTokenData` struct with details about the staked asset.
+   * @return stakedUserData `StakedTokenUserData` struct containing user-specific details related to the staked asset
    */
-  function STAKED_PSYS() external returns (address);
-
-  /**
-   * @notice Return the address of the BPT token
-   * @return The address of the BPT token
-   */
-  function BPT() external returns (address);
-
-  /**
-   * @notice Return the address of the Staked BPT token
-   * @return The address of the StkBPT token
-   */
-  function STAKED_BPT() external returns (address);
-
-  /**
-   * @notice Returns data of all Staked Tokens
-   * @return stkPSYSData An object with stkPSYS data
-   * @return stkBptData An object with StkBpt data
-   * @return ethPrice The price of ETH, USD denominated (expressed with 8 decimals)
-   */
-  function getAllStakedTokenData()
-    external
-    view
-    returns (
-      StakedTokenData memory stkPSYSData,
-      StakedTokenData memory stkBptData,
-      uint256 ethPrice
-    );
-
-  /**
-   * @notice Returns data of Staked PSYS
-   * @return stkPSYSData An object with stkPSYS data
-   */
-  function getstkPSYSData() external view returns (StakedTokenData memory stkPSYSData);
-
-  /**
-   * @notice Returns data of Staked Bpt PSYS
-   * @return stkBptData An object with StkBpt data
-   */
-  function getStkBptData() external view returns (StakedTokenData memory stkBptData);
-
-  /**
-   * @notice Returns user data of all Staked Tokens
-   * @param user The address of the user
-   * @return stkPSYSData An object with stkPSYS data
-   * @return stkPSYSUserData An object with user data of stkPSYS
-   * @return stkBptData An object with StkBpt data
-   * @return stkBptUserData An object with user data of StkBpt
-   * @return ethPrice The price of ETH, USD denominated (expressed with 8 decimals)
-   */
-  function getAllStakedTokenUserData(
+  function getStakedUserData(
+    address stakedAsset,
+    address oracle,
     address user
   )
     external
     view
-    returns (
-      StakedTokenData memory stkPSYSData,
-      StakedTokenUserData memory stkPSYSUserData,
-      StakedTokenData memory stkBptData,
-      StakedTokenUserData memory stkBptUserData,
-      uint256 ethPrice
-    );
+    returns (StakedTokenData memory stakedTokenData, StakedTokenUserData memory stakedUserData);
 
   /**
-   * @notice Returns user data of Staked PSYS
-   * @param user The address of the user
-   * @return stkPSYSData An object with stkPSYS data
-   * @return stkPSYSUserData An object with user data of stkPSYS
+   * notice Retrieves general data of a batch of staked assets
+   * @param stakedAssets An array of addresses of staked assets.
+   * @param oracles An array of oracle addresses for the staked assets, USD denominated with 8 decimals.
+   * @return stakedData An array containing data about the staked assets.
+   * @return ethPrice The price of ETH asset, USD denominated with 8 decimals.
    */
-  function getstkPSYSUserData(
+  function getStakedAssetDataBatch(
+    address[] calldata stakedAssets,
+    address[] calldata oracles
+  ) external view returns (StakedTokenData[] memory stakedData, uint256 ethPrice);
+
+  /**
+   * @notice Retrieves general and user-specific data for a batch of staked assets.
+   * @param stakedAssets An array of addresses of staked assets.
+   * @param oracles An array of oracle addresses for the staked assets, USD denominated with 8 decimals.
+   * @param user The address of the user to retrieve data from.
+   * @return stakedTokenData An array containing data about the staked assets.
+   * @return stakedUserData An array containing user-specific data about the staked assets.
+   */
+  function getStakedUserDataBatch(
+    address[] calldata stakedAssets,
+    address[] calldata oracles,
     address user
   )
     external
     view
-    returns (StakedTokenData memory stkPSYSData, StakedTokenUserData memory stkPSYSUserData);
-
-  /**
-   * @notice Returns user data of Staked Bpt Pegasys
-   * @param user The address of the user
-   * @return stkBptData An object with StkBpt data
-   * @return stkBptUserData An object with user data of StkBpt
-   */
-  function getStkBptPegasysUserData(
-    address user
-  )
-    external
-    view
-    returns (StakedTokenData memory stkBptData, StakedTokenUserData memory stkBptUserData);
+    returns (StakedTokenData[] memory stakedTokenData, StakedTokenUserData[] memory stakedUserData);
 }

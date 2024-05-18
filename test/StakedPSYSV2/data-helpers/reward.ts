@@ -135,14 +135,16 @@ export const compareRewardsAtTransfer = async (
     await (await StakedPSYSV3.getTotalRewardsBalance(fromAddress)).toString()
   );
   const fromExpectedAccruedRewards = getRewards(fromSavedBalance, fromIndexAfter, fromIndexBefore);
-  expect(fromRewardsBalanceAfter).to.bignumber.eq(fromSavedRewards.add(fromExpectedAccruedRewards));
+  // FIXME: Temporarily removed type judgment due to version-dependent issues
+  expect(fromRewardsBalanceAfter).to.eq(fromSavedRewards.add(fromExpectedAccruedRewards));
 
   // TO: Compare calculated JS rewards versus Solidity user rewards
   const toRewardsBalanceAfter = BigNumber.from(
     await (await StakedPSYSV3.getTotalRewardsBalance(toAddress)).toString()
   );
   const toExpectedAccruedRewards = getRewards(toSavedBalance, toIndexAfter, toIndexBefore);
-  expect(toRewardsBalanceAfter).to.bignumber.eq(toSavedRewards.add(toExpectedAccruedRewards));
+  // FIXME: Temporarily removed type judgment due to version-dependent issues
+  expect(toRewardsBalanceAfter).to.eq(toSavedRewards.add(toExpectedAccruedRewards));
 
   // Explicit check rewards when the test case expects rewards to the user
   if (fromShouldReward) {

@@ -7,6 +7,7 @@ import {
   STAKED_PSYS_SYMBOL,
   STAKED_PSYS_DECIMALS,
   MAX_UINT_AMOUNT,
+  ZERO_ADDRESS,
 } from '../../helpers/constants';
 import {
   deployInitializableAdminUpgradeabilityProxy,
@@ -123,6 +124,7 @@ export const testDeploypsysStakeV2 = async (
     vaultOfRewardsAddress,
     emissionManager,
     (1000 * 60 * 60).toString(),
+    ZERO_ADDRESS,
   ]);
 
   const StakedPSYSEncodedInitialize = StakedPSYSImpl.interface.encodeFunctionData('initialize');

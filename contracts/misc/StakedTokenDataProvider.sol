@@ -1,38 +1,26 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.5;
+pragma solidity ^0.7.5;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from '../interfaces/IERC20.sol';
-import {AggregatedStakedPSYSV3} from '../interfaces/AggregatedStakedPSYSV3.sol';
-import {IStakedToken} from '../interfaces/IStakedToken.sol';
+import {IAggregatedStakeToken} from '../interfaces/IAggregatedStakeToken.sol';
 import {AggregatorInterface} from '../interfaces/AggregatorInterface.sol';
 import {IStakedTokenDataProvider} from '../interfaces/IStakedTokenDataProvider.sol';
+import {AggregatedStakedTokenV3} from '../interfaces/AggregatedStakedTokenV3.sol';
 
 /**
  * @title StakedTokenDataProvider
- * @notice Data provider contract for Staked Tokens of the Safety Module (e.g. PSYS:stkPSYS and BPT:StkBPT)
+ * @notice Data provider contract for Staked Tokens of the Safety Module (such as stkPSYS for staked PSYS in the safety module)
  */
 contract StakedTokenDataProvider is IStakedTokenDataProvider {
   /// @inheritdoc IStakedTokenDataProvider
   address public immutable override ETH_USD_PRICE_FEED;
 
   /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override PSYS_PRICE_FEED;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override BPT_PRICE_FEED;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override PSYS;
+  address public immutable override PSYS_USD_PRICE_FEED;
 
   /// @inheritdoc IStakedTokenDataProvider
   address public immutable override STAKED_PSYS;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override BPT;
-
-  /// @inheritdoc IStakedTokenDataProvider
-  address public immutable override STAKED_BPT;
 
   uint256 private constant SECONDS_PER_YEAR = 365 days;
 
@@ -40,139 +28,124 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
 
   /**
    * @dev Constructor
-   * @param psys The address of the PSYS token
-   * @param stkPSYS The address of the StkPSYS token
-   * @param bpt The address of the BPT PSYS / ETH token
-   * @param stkBpt The address of the StkBptPSYS token
+   * @param stkPsys The address of the StkPSYS token
    * @param ethUsdPriceFeed The address of ETH price feed (USD denominated, with 8 decimals)
-   * @param psysPriceFeed The address of PSYS price feed (ETH denominated, with 18 decimals)
-   * @param bptPriceFeed The address of StakedBpt price feed (ETH denominated, with 18 decimals)
+   * @param pegasysUsdPriceFeed The address of PSYS price feed (USD denominated, with 8 decimals)
    */
-  constructor(
-    address psys,
-    address stkPSYS,
-    address bpt,
-    address stkBpt,
-    address ethUsdPriceFeed,
-    address psysPriceFeed,
-    address bptPriceFeed
-  ) public {
-    PSYS = psys;
-    STAKED_PSYS = stkPSYS;
-    BPT = bpt;
-    STAKED_BPT = stkBpt;
+  constructor(address stkPsys, address ethUsdPriceFeed, address pegasysUsdPriceFeed) {
+    STAKED_PSYS = stkPsys;
     ETH_USD_PRICE_FEED = ethUsdPriceFeed;
-    PSYS_PRICE_FEED = psysPriceFeed;
-    BPT_PRICE_FEED = bptPriceFeed;
+    PSYS_USD_PRICE_FEED = pegasysUsdPriceFeed;
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getAllStakedTokenData()
-    external
-    view
-    override
-    returns (
-      StakedTokenData memory stkPSYSData,
-      StakedTokenData memory stkBptData,
-      uint256 ethPrice
-    )
-  {
-    stkPSYSData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_PSYS));
-    stkBptData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_BPT));
-    ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
+  function getStakedAssetData(
+    address stakedAsset,
+    address oracle
+  ) external view override returns (StakedTokenData memory) {
+    return _getStakedTokenData(stakedAsset, oracle);
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getstkPSYSData() external view override returns (StakedTokenData memory stkPSYSData) {
-    stkPSYSData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_PSYS));
-  }
-
-  /// @inheritdoc IStakedTokenDataProvider
-  function getStkBptData() external view override returns (StakedTokenData memory stkBptData) {
-    stkBptData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_BPT));
-  }
-
-  /// @inheritdoc IStakedTokenDataProvider
-  function getAllStakedTokenUserData(
+  function getStakedUserData(
+    address stakedAsset,
+    address oracle,
     address user
-  )
-    external
-    view
-    override
-    returns (
-      StakedTokenData memory stkPSYSData,
-      StakedTokenUserData memory stkPSYSUserData,
-      StakedTokenData memory stkBptData,
-      StakedTokenUserData memory stkBptUserData,
-      uint256 ethPrice
-    )
-  {
-    stkPSYSData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_PSYS));
-    stkPSYSUserData = _getStakedTokenUserData(AggregatedStakedPSYSV3(STAKED_PSYS), user);
-    stkBptData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_BPT));
-    stkBptUserData = _getStakedTokenUserData(AggregatedStakedPSYSV3(STAKED_BPT), user);
-    ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
+  ) external view override returns (StakedTokenData memory, StakedTokenUserData memory) {
+    return (_getStakedTokenData(stakedAsset, oracle), _getStakedTokenUserData(stakedAsset, user));
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getstkPSYSUserData(
-    address user
-  )
-    external
-    view
-    override
-    returns (StakedTokenData memory stkPSYSData, StakedTokenUserData memory stkPSYSUserData)
-  {
-    stkPSYSData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_PSYS));
-    stkPSYSUserData = _getStakedTokenUserData(AggregatedStakedPSYSV3(STAKED_PSYS), user);
+  function getStakedAssetDataBatch(
+    address[] calldata stakedAssets,
+    address[] calldata oracles
+  ) external view override returns (StakedTokenData[] memory, uint256) {
+    require(stakedAssets.length == oracles.length, 'Arrays must be of the same length');
+
+    StakedTokenData[] memory stakedData = new StakedTokenData[](stakedAssets.length);
+    uint256 ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
+    for (uint256 i = 0; i < stakedAssets.length; i++) {
+      stakedData[i] = _getStakedTokenData(stakedAssets[i], oracles[i]);
+    }
+    return (stakedData, ethPrice);
   }
 
   /// @inheritdoc IStakedTokenDataProvider
-  function getStkBptPegasysUserData(
+  function getStakedUserDataBatch(
+    address[] calldata stakedAssets,
+    address[] calldata oracles,
     address user
-  )
-    external
-    view
-    override
-    returns (StakedTokenData memory stkBptData, StakedTokenUserData memory stkBptUserData)
-  {
-    stkBptData = _getStakedTokenData(AggregatedStakedPSYSV3(STAKED_BPT));
-    stkBptUserData = _getStakedTokenUserData(AggregatedStakedPSYSV3(STAKED_BPT), user);
+  ) external view override returns (StakedTokenData[] memory, StakedTokenUserData[] memory) {
+    require(stakedAssets.length == oracles.length, 'All arrays must be of the same length');
+    StakedTokenData[] memory stakedData = new StakedTokenData[](stakedAssets.length);
+    StakedTokenUserData[] memory userData = new StakedTokenUserData[](stakedAssets.length);
+
+    for (uint256 i = 0; i < stakedAssets.length; i++) {
+      stakedData[i] = _getStakedTokenData(stakedAssets[i], oracles[i]);
+      userData[i] = _getStakedTokenUserData(stakedAssets[i], user);
+    }
+    return (stakedData, userData);
   }
 
   /**
    * @notice Returns data of the Staked Token passed as parameter
-   * @param stakedToken The address of the StakedToken (eg. stkPSYS, stkbptPSYS)
+   * @param stakedToken The address of the StakedToken (eg. stkPsys)
+   * @param oracle The address of the oracle associated of the staked token, USD denominated with 8 decimals
    * @return data An object with general data of the StakedToken
    */
   function _getStakedTokenData(
-    AggregatedStakedPSYSV3 stakedToken
+    address stakedToken,
+    address oracle
   ) internal view returns (StakedTokenData memory data) {
-    data.stakedTokenTotalSupply = stakedToken.totalSupply();
-    data.stakedTokenTotalRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenTotalSupply);
-    data.stakeCooldownSeconds = stakedToken.COOLDOWN_SECONDS();
-    data.stakeUnstakeWindow = stakedToken.UNSTAKE_WINDOW();
-    data.rewardTokenPriceEth = uint256(AggregatorInterface(PSYS_PRICE_FEED).latestAnswer());
-    data.distributionEnd = stakedToken.DISTRIBUTION_END();
+    IAggregatedStakeToken stkToken = IAggregatedStakeToken(stakedToken);
+    data.stakedTokenTotalSupply = stkToken.totalSupply();
+    data.stakedTokenTotalRedeemableAmount = stkToken.previewRedeem(data.stakedTokenTotalSupply);
+    data.stakeCooldownSeconds = stkToken.getCooldownSeconds();
+    data.stakeUnstakeWindow = stkToken.UNSTAKE_WINDOW();
+    data.rewardTokenPriceUsd = uint256(AggregatorInterface(PSYS_USD_PRICE_FEED).latestAnswer());
+    // TODO: data.maxSlashablePercentage = stkToken.getMaxSlashablePercentage();
+    try AggregatedStakedTokenV3(stakedToken).DISTRIBUTION_END() returns (uint256 distributionEnd) {
+      data.distributionEnd = distributionEnd;
+    } catch {
+      try stkToken.distributionEnd() returns (uint256 distributionEnd) {
+        data.distributionEnd = distributionEnd;
+      } catch {}
+    }
+    // TODO: data.inPostSlashingPeriod = stkToken.inPostSlashingPeriod();
+    (uint128 emissionPerSecond, , ) = stkToken.assets(address(stakedToken));
+    data.distributionPerSecond = block.timestamp < data.distributionEnd ? emissionPerSecond : 0;
 
-    data.distributionPerSecond = block.timestamp < data.distributionEnd
-      ? stakedToken.assets(address(stakedToken)).emissionPerSecond
-      : 0;
-
-    // stkPSYS
+    // stkPsys
     if (address(stakedToken) == STAKED_PSYS) {
-      data.stakedTokenPriceEth = data.rewardTokenPriceEth;
+      data.stakedTokenPriceUsd = data.rewardTokenPriceUsd;
       // assumes PSYS and stkPSYS have the same value
       data.stakeApy = _calculateApy(data.distributionPerSecond, data.stakedTokenTotalSupply);
-
-      // stkbptPSYS
-    } else if (address(stakedToken) == STAKED_BPT) {
-      data.stakedTokenPriceEth = uint256(AggregatorInterface(BPT_PRICE_FEED).latestAnswer());
+    } else {
+      // other wrapped assets
+      data.stakedTokenPriceUsd = uint256(AggregatorInterface(oracle).latestAnswer());
       data.stakeApy = _calculateApy(
-        data.distributionPerSecond * data.rewardTokenPriceEth,
-        data.stakedTokenTotalSupply * data.stakedTokenPriceEth
+        data.distributionPerSecond * data.rewardTokenPriceUsd,
+        data.stakedTokenTotalSupply * data.stakedTokenPriceUsd
       );
     }
+  }
+
+  /**
+   * @notice Returns user data of the Staked Token
+   * @param stakedToken The address of the StakedToken asset
+   * @param user The address of the user
+   * @return data struct containing user-specific details related to the staked asset
+   */
+  function _getStakedTokenUserData(
+    address stakedToken,
+    address user
+  ) internal view returns (StakedTokenUserData memory data) {
+    IAggregatedStakeToken stkToken = IAggregatedStakeToken(stakedToken);
+    data.stakedTokenUserBalance = stkToken.balanceOf(user);
+    data.rewardsToClaim = stkToken.getTotalRewardsBalance(user);
+    data.underlyingTokenUserBalance = IERC20(stkToken.STAKED_TOKEN()).balanceOf(user);
+    data.stakedTokenRedeemableAmount = stkToken.previewRedeem(data.stakedTokenUserBalance);
+    data.userCooldownTimestamp = stkToken.stakersCooldowns(user);
   }
 
   /**
@@ -180,6 +153,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
    * @dev It uses the value of the reward and StakedToken asset
    * @param distributionPerSecond The value of the rewards being distributed per second
    * @param stakedTokenTotalSupply The value of the total supply of StakedToken asset
+   * @return the APY of the reward distribution among StakedToken holders
    */
   function _calculateApy(
     uint256 distributionPerSecond,
@@ -187,21 +161,5 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   ) internal pure returns (uint256) {
     if (stakedTokenTotalSupply == 0) return 0;
     return (distributionPerSecond * SECONDS_PER_YEAR * APY_PRECISION) / stakedTokenTotalSupply;
-  }
-
-  /**
-   * @notice Returns user data of the Staked Token
-   * @param stakedToken The address of the StakedToken asset
-   * @param user The address of the user
-   */
-  function _getStakedTokenUserData(
-    AggregatedStakedPSYSV3 stakedToken,
-    address user
-  ) internal view returns (StakedTokenUserData memory data) {
-    data.stakedTokenUserBalance = stakedToken.balanceOf(user);
-    data.rewardsToClaim = stakedToken.getTotalRewardsBalance(user);
-    data.underlyingTokenUserBalance = IERC20(stakedToken.STAKED_TOKEN()).balanceOf(user);
-    data.stakedTokenRedeemableAmount = stakedToken.previewRedeem(data.stakedTokenUserBalance);
-    (data.userCooldownTimestamp, data.userCooldownAmount) = stakedToken.stakersCooldowns(user);
   }
 }

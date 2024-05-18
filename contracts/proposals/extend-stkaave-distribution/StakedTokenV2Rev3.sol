@@ -6,6 +6,8 @@
 pragma solidity 0.7.5;
 pragma experimental ABIEncoderV2;
 
+import {IERC20WithPermit} from '../../interfaces/IERC20WithPermit.sol';
+
 interface IGovernancePowerDelegationToken {
   enum DelegationType {
     VOTING_POWER,
@@ -715,6 +717,8 @@ interface IStakedPSYS {
   function cooldown() external;
 
   function claimRewards(address to, uint256 amount) external;
+
+  function previewRedeem(uint256 shares) external view returns (uint256);
 }
 
 interface ITransferHook {
@@ -1498,7 +1502,11 @@ contract StakedTokenV3Rev3 is
     assetData.lastUpdateTimestamp = 1620594720;
   }
 
-  function stake(address onBehalfOf, uint256 amount) external override {
+  function stake(address to, uint256 amount) external override {
+    _stake(to, amount);
+  }
+
+  function _stake(address onBehalfOf, uint256 amount) internal {
     require(amount != 0, 'INVALID_ZERO_AMOUNT');
     uint256 balanceOfUser = balanceOf(onBehalfOf);
 
@@ -1553,6 +1561,18 @@ contract StakedTokenV3Rev3 is
     IERC20(STAKED_TOKEN).safeTransfer(to, amountToRedeem);
 
     emit Redeem(msg.sender, to, amountToRedeem);
+  }
+
+  function previewRedeem(uint256 shares) external view override returns (uint256) {
+    uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
+    if (block.timestamp <= cooldownStartTimestamp.add(COOLDOWN_SECONDS)) {
+      return 0;
+    }
+    if (block.timestamp.sub(cooldownStartTimestamp.add(COOLDOWN_SECONDS)) > UNSTAKE_WINDOW) {
+      return 0;
+    }
+    uint256 balanceOfMessageSender = balanceOf(msg.sender);
+    return balanceOfMessageSender;
   }
 
   /**
@@ -1757,6 +1777,31 @@ contract StakedTokenV3Rev3 is
     _approve(owner, spender, value);
   }
 
+  function stakeWithPermit(
+    uint256 amount,
+    uint256 deadline,
+    uint8 v,
+    bytes32 r,
+    bytes32 s
+  ) external {
+    try
+      IERC20WithPermit(address(STAKED_TOKEN)).permit(
+        msg.sender,
+        address(this),
+        amount,
+        deadline,
+        v,
+        r,
+        s
+      )
+    {
+      // do nothing
+    } catch (bytes memory) {
+      // do nothing
+    }
+    _stake(msg.sender, amount);
+  }
+
   /**
    * @dev Writes a snapshot before any operation involving transfer of value: _transfer, _mint and _burn
    * - On _transfer, it writes snapshots for both "from" and "to"
@@ -1886,5 +1931,9 @@ contract StakedTokenV3Rev3 is
     require(block.timestamp <= expiry, 'INVALID_EXPIRATION');
     _delegateByType(signatory, delegatee, DelegationType.VOTING_POWER);
     _delegateByType(signatory, delegatee, DelegationType.PROPOSITION_POWER);
+  }
+
+  function getCooldownSeconds() external view returns (uint256) {
+    return COOLDOWN_SECONDS;
   }
 }
