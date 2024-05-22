@@ -14,7 +14,7 @@
     "compile": "SKIP_LOAD=true hardhat compile",
     "compile:force": "npm run compile -- --force",
     "compile:force:quiet": "npm run compile:force -- --quiet",
-    "test": "npm run compile:force:quiet && hardhat test test/__setup.spec.ts test/PegasysIncentivesController/*.spec.ts test/StakedPSYSV2/*.spec.ts",
+    "test": "npm run compile:force:quiet && hardhat test test/__setup.spec.ts test/PegasysIncentivesController/*.spec.ts test/StakedPSYS/*.spec.ts test/StakedPSYSV2/*.spec.ts",
     "test:ci": "npm run compile:force:quiet && npm run test-pei && npm run test-psi && npm run test-psi2 && npm run test-bpt",
     "test-pei": "npm run test test/__setup.spec.ts test/PegasysIncentivesController/*.spec.ts",
     "test-psi": "npm run test test/__setup.spec.ts test/StakedPSYS/*.spec.ts",

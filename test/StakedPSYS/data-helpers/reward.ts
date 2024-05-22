@@ -65,7 +65,8 @@ export const compareRewardsAtAction = async (
     await (await StakedPSYS.getTotalRewardsBalance(userAddress)).toString()
   );
   const expectedAccruedRewards = getRewards(userBalance, userIndexAfter, userIndexBefore);
-  expect(rewardsBalanceAfter).to.bignumber.eq(rewardsBalanceBefore.add(expectedAccruedRewards));
+  // FIXME: Temporarily removed type judgment due to version-dependent issues
+  expect(rewardsBalanceAfter).to.eq(rewardsBalanceBefore.add(expectedAccruedRewards));
 
   // Explicit check rewards when the test case expects rewards to the user
   if (shouldReward) {
