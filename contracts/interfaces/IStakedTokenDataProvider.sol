@@ -59,7 +59,7 @@ interface IStakedTokenDataProvider {
   /**
    * @notice Retrieves staked token data and user-specific data for a given user, staked asset,
    *          and its associated oracle.
-   * @param stakedAsset The address of the staked asset (eg. stkAave, stkBptAave)
+   * @param stakedAsset The address of the staked asset (eg. stkPSYS)
    * @param oracle The address of the oracle for the staked asset, USD denominated with 8 decimals
    * @param user The address of the user for whom the data is to be fetched.
    * @return stakedTokenData `StakedTokenData` struct with details about the staked asset.
