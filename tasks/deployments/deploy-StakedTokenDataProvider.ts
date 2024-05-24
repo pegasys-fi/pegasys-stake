@@ -16,7 +16,7 @@ task(`deploy-${StakedTokenDataProvider}`, `Deploys the ${StakedTokenDataProvider
   .setAction(
     async (
       {
-        stkAave: stkAaveAddress,
+        stkPSYS: stkPSYSAddress,
         ethOracle: ethOracleAddress,
         psysOracle: psysOracleAddress,
         verify,
