@@ -38,7 +38,7 @@ task(`deploy-${StakedTokenDataProvider}`, `Deploys the ${StakedTokenDataProvider
       }
 
       const stakedTokenDataProvider = await deployStakedTokenDataProvider(
-        [stkAaveAddress, ethOracleAddress, psysOracleAddress],
+        [stkPSYSAddress, ethOracleAddress, psysOracleAddress],
         verify
       );
 
