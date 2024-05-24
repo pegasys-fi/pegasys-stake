@@ -28,7 +28,7 @@ task(`deploy-${StakedTokenDataProvider}`, `Deploys the ${StakedTokenDataProvider
         checkVerification();
       }
       if (!stkPSYSAddress || getAddress(stkPSYSAddress) === ZERO_ADDRESS) {
-        throw `address of stkAave contract is invalid`;
+        throw `address of stkPSYS contract is invalid`;
       }
       if (!ethOracleAddress || getAddress(ethOracleAddress) === ZERO_ADDRESS) {
         throw `address of ethOracle contract is invalid`;
