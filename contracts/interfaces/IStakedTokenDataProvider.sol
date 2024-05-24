@@ -47,7 +47,7 @@ interface IStakedTokenDataProvider {
 
   /**
    * @notice Returns data of Staked asset
-   * @param stakedAsset The address of the staked asset (eg. stkAave, stkBptAave)
+   * @param stakedAsset The address of the staked asset (eg. stkPSYS)
    * @param oracle The address of the oracle for the staked asset, USD denominated with 8 decimals
    * @return stakedAssetData struct with staked asset data
    */
