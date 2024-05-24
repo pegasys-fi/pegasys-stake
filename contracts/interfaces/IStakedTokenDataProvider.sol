@@ -36,7 +36,7 @@ interface IStakedTokenDataProvider {
   function ETH_USD_PRICE_FEED() external view returns (address);
 
   /**
-   * @return The address of the AAVE price feed, USD denominated, expressed with 8 decimals
+   * @return The address of the PSYS price feed, USD denominated, expressed with 18 decimals
    */
   function PSYS_USD_PRICE_FEED() external view returns (address);
 
