@@ -41,7 +41,7 @@ interface IStakedTokenDataProvider {
   function PSYS_USD_PRICE_FEED() external view returns (address);
 
   /**
-   * @return The address of the StkAAVE token
+   * @return The address of the StkPSYS token
    */
   function STAKED_PSYS() external view returns (address);
 
