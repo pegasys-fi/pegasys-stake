@@ -9,7 +9,7 @@ import { registerContractInJsonDb } from '../../helpers/contracts-helpers';
 const { StakedTokenDataProvider, StakedPSYSV3 } = eContractid;
 
 task(`deploy-${StakedTokenDataProvider}`, `Deploys the ${StakedTokenDataProvider} contract`)
-  .addParam('stkAave', `The address of the ${StakedPSYSV3} contract`)
+  .addParam('stkPSYS', `The address of the ${StakedPSYSV3} contract`)
   .addParam('ethOracle', 'The address of the eth price feed contract')
   .addParam('psysOracle', 'The address of the psys price feed contract')
   .addFlag('verify', 'Verify StakedPSYSV3 contract via Etherscan API.')
