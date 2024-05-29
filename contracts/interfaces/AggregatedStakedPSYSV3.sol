@@ -248,7 +248,7 @@ interface AggregatedStakedPSYSV3 {
 
   function stakerRewardsToClaim(address) external view returns (uint256);
 
-  function stakersCooldowns(address) external view returns (uint40 timestamp, uint216 amount);
+  function stakersCooldowns(address) external view returns (uint40 timestamp);
 
   function symbol() external view returns (string memory);
 

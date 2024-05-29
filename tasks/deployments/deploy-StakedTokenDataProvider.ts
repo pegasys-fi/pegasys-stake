@@ -6,17 +6,17 @@ import { deployStakedTokenDataProvider } from '../../helpers/contracts-accessors
 import { checkVerification } from '../../helpers/etherscan-verification';
 import { registerContractInJsonDb } from '../../helpers/contracts-helpers';
 
-const { StakedTokenDataProvider, StakedPSYSV3 } = eContractid;
+const { StakedTokenDataProvider, StakedTokenV3Rev3 } = eContractid;
 
 task(`deploy-${StakedTokenDataProvider}`, `Deploys the ${StakedTokenDataProvider} contract`)
-  .addParam('stkPSYS', `The address of the ${StakedPSYSV3} contract`)
+  .addParam('stkPsys', `The address of the ${StakedTokenV3Rev3} contract`)
   .addParam('ethOracle', 'The address of the eth price feed contract')
   .addParam('psysOracle', 'The address of the psys price feed contract')
   .addFlag('verify', 'Verify StakedPSYSV3 contract via Etherscan API.')
   .setAction(
     async (
       {
-        stkPSYS: stkPSYSAddress,
+        stkPsys: stkPSYSAddress,
         ethOracle: ethOracleAddress,
         psysOracle: psysOracleAddress,
         verify,

@@ -3,10 +3,10 @@ pragma solidity ^0.7.5;
 pragma experimental ABIEncoderV2;
 
 import {IERC20} from '../interfaces/IERC20.sol';
-import {IAggregatedStakeToken} from '../interfaces/IAggregatedStakeToken.sol';
+import {AggregatedStakedPSYSV3} from '../interfaces/AggregatedStakedPSYSV3.sol';
+import {IStakedToken} from '../interfaces/IStakedToken.sol';
 import {AggregatorInterface} from '../interfaces/AggregatorInterface.sol';
 import {IStakedTokenDataProvider} from '../interfaces/IStakedTokenDataProvider.sol';
-import {AggregatedStakedTokenV3} from '../interfaces/AggregatedStakedTokenV3.sol';
 
 /**
  * @title StakedTokenDataProvider
@@ -39,6 +39,40 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   }
 
   /// @inheritdoc IStakedTokenDataProvider
+  function getAllStakedTokenData()
+    external
+    view
+    override
+    returns (
+      StakedTokenData memory stkPSYSData,
+      StakedTokenData memory stkBptData,
+      uint256 ethPrice
+    )
+  {
+    stkPSYSData = _getStakedTokenData(STAKED_PSYS, ETH_USD_PRICE_FEED);
+    ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
+  }
+
+  /// @inheritdoc IStakedTokenDataProvider
+  function getAllStakedTokenUserData(
+    address user
+  )
+    external
+    view
+    override
+    returns (
+      StakedTokenData memory stkPSYSData,
+      StakedTokenUserData memory stkPSYSUserData,
+      StakedTokenData memory stkBptData,
+      StakedTokenUserData memory stkBptUserData,
+      uint256 ethPrice
+    )
+  {
+    stkPSYSData = _getStakedTokenData(STAKED_PSYS, ETH_USD_PRICE_FEED);
+    stkPSYSUserData = _getStakedTokenUserData(STAKED_PSYS, user);
+    ethPrice = uint256(AggregatorInterface(ETH_USD_PRICE_FEED).latestAnswer());
+  }
+
   function getStakedAssetData(
     address stakedAsset,
     address oracle
@@ -46,20 +80,18 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     return _getStakedTokenData(stakedAsset, oracle);
   }
 
-  /// @inheritdoc IStakedTokenDataProvider
   function getStakedUserData(
     address stakedAsset,
     address oracle,
     address user
-  ) external view override returns (StakedTokenData memory, StakedTokenUserData memory) {
+  ) external view returns (StakedTokenData memory, StakedTokenUserData memory) {
     return (_getStakedTokenData(stakedAsset, oracle), _getStakedTokenUserData(stakedAsset, user));
   }
 
-  /// @inheritdoc IStakedTokenDataProvider
   function getStakedAssetDataBatch(
     address[] calldata stakedAssets,
     address[] calldata oracles
-  ) external view override returns (StakedTokenData[] memory, uint256) {
+  ) external view returns (StakedTokenData[] memory, uint256) {
     require(stakedAssets.length == oracles.length, 'Arrays must be of the same length');
 
     StakedTokenData[] memory stakedData = new StakedTokenData[](stakedAssets.length);
@@ -70,12 +102,11 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     return (stakedData, ethPrice);
   }
 
-  /// @inheritdoc IStakedTokenDataProvider
   function getStakedUserDataBatch(
     address[] calldata stakedAssets,
     address[] calldata oracles,
     address user
-  ) external view override returns (StakedTokenData[] memory, StakedTokenUserData[] memory) {
+  ) external view returns (StakedTokenData[] memory, StakedTokenUserData[] memory) {
     require(stakedAssets.length == oracles.length, 'All arrays must be of the same length');
     StakedTokenData[] memory stakedData = new StakedTokenData[](stakedAssets.length);
     StakedTokenUserData[] memory userData = new StakedTokenUserData[](stakedAssets.length);
@@ -97,35 +128,28 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     address stakedToken,
     address oracle
   ) internal view returns (StakedTokenData memory data) {
-    IAggregatedStakeToken stkToken = IAggregatedStakeToken(stakedToken);
+    AggregatedStakedPSYSV3 stkToken = AggregatedStakedPSYSV3(stakedToken);
     data.stakedTokenTotalSupply = stkToken.totalSupply();
     data.stakedTokenTotalRedeemableAmount = stkToken.previewRedeem(data.stakedTokenTotalSupply);
     data.stakeCooldownSeconds = stkToken.getCooldownSeconds();
     data.stakeUnstakeWindow = stkToken.UNSTAKE_WINDOW();
-    data.rewardTokenPriceUsd = uint256(AggregatorInterface(PSYS_USD_PRICE_FEED).latestAnswer());
-    // TODO: data.maxSlashablePercentage = stkToken.getMaxSlashablePercentage();
-    try AggregatedStakedTokenV3(stakedToken).DISTRIBUTION_END() returns (uint256 distributionEnd) {
-      data.distributionEnd = distributionEnd;
-    } catch {
-      try stkToken.distributionEnd() returns (uint256 distributionEnd) {
-        data.distributionEnd = distributionEnd;
-      } catch {}
-    }
-    // TODO: data.inPostSlashingPeriod = stkToken.inPostSlashingPeriod();
-    (uint128 emissionPerSecond, , ) = stkToken.assets(address(stakedToken));
-    data.distributionPerSecond = block.timestamp < data.distributionEnd ? emissionPerSecond : 0;
+    data.rewardTokenPriceEth = uint256(AggregatorInterface(PSYS_USD_PRICE_FEED).latestAnswer());
+    data.distributionEnd = stkToken.DISTRIBUTION_END();
+    data.distributionPerSecond = block.timestamp < data.distributionEnd
+      ? stkToken.assets(address(stakedToken)).emissionPerSecond
+      : 0;
 
     // stkPsys
     if (address(stakedToken) == STAKED_PSYS) {
-      data.stakedTokenPriceUsd = data.rewardTokenPriceUsd;
+      data.stakedTokenPriceEth = data.rewardTokenPriceEth;
       // assumes PSYS and stkPSYS have the same value
       data.stakeApy = _calculateApy(data.distributionPerSecond, data.stakedTokenTotalSupply);
     } else {
       // other wrapped assets
-      data.stakedTokenPriceUsd = uint256(AggregatorInterface(oracle).latestAnswer());
+      data.stakedTokenPriceEth = uint256(AggregatorInterface(oracle).latestAnswer());
       data.stakeApy = _calculateApy(
-        data.distributionPerSecond * data.rewardTokenPriceUsd,
-        data.stakedTokenTotalSupply * data.stakedTokenPriceUsd
+        data.distributionPerSecond * data.rewardTokenPriceEth,
+        data.stakedTokenTotalSupply * data.stakedTokenPriceEth
       );
     }
   }
@@ -140,7 +164,7 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
     address stakedToken,
     address user
   ) internal view returns (StakedTokenUserData memory data) {
-    IAggregatedStakeToken stkToken = IAggregatedStakeToken(stakedToken);
+    AggregatedStakedPSYSV3 stkToken = AggregatedStakedPSYSV3(stakedToken);
     data.stakedTokenUserBalance = stkToken.balanceOf(user);
     data.rewardsToClaim = stkToken.getTotalRewardsBalance(user);
     data.underlyingTokenUserBalance = IERC20(stkToken.STAKED_TOKEN()).balanceOf(user);
@@ -161,5 +185,17 @@ contract StakedTokenDataProvider is IStakedTokenDataProvider {
   ) internal pure returns (uint256) {
     if (stakedTokenTotalSupply == 0) return 0;
     return (distributionPerSecond * SECONDS_PER_YEAR * APY_PRECISION) / stakedTokenTotalSupply;
+  }
+
+  function getstkPSYSUserData(
+    address user
+  )
+    external
+    view
+    override
+    returns (StakedTokenData memory stkPSYSData, StakedTokenUserData memory stkPSYSUserData)
+  {
+    stkPSYSData = _getStakedTokenData(STAKED_PSYS, ETH_USD_PRICE_FEED);
+    stkPSYSUserData = _getStakedTokenUserData(STAKED_PSYS, user);
   }
 }
